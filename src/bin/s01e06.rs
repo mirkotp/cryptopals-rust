@@ -1,4 +1,4 @@
-use cryptopals::{base64_to_bytes, hamming_distance, single_byte_xor, score, xor};
+use cryptopals::{ToBytes, hamming_distance, xor_char, english_score, xor};
 use std::io::{BufReader, BufRead};
 use std::fs::File;
 
@@ -9,7 +9,7 @@ fn main() {
     let mut bytes = Vec::with_capacity(64*60/4*3);  // We know the size of
                                                     // the input file.
     for line in reader.lines() {
-        let mut line_bytes = base64_to_bytes(&line.unwrap()).unwrap();
+        let mut line_bytes = line.unwrap().parse_base64().unwrap();
         bytes.append(&mut line_bytes);
     }
 
@@ -45,8 +45,8 @@ fn main() {
         let mut best_xor: u8 = 0;
         let mut best_score = f64::NEG_INFINITY;
         for x in 0..255 {
-            let xored = single_byte_xor(&transpose, x);
-            let score = score(&xored);
+            let xored = xor_char(&transpose, x);
+            let score = english_score(&xored);
             if best_score < score {
                 best_score = score;
                 best_xor = x;

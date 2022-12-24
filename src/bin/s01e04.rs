@@ -1,4 +1,4 @@
-use cryptopals::{parse_hex, single_byte_xor, score};
+use cryptopals::{english_score, ToBytes, xor_char};
 use std::io::{BufReader, BufRead};
 use std::fs::File;
 
@@ -12,11 +12,11 @@ fn main() {
 
     for line in reader.lines() {
         let l = line.unwrap();
-        let bytes = parse_hex(&l).unwrap();
+        let bytes = &l.parse_hex().unwrap();
     
         for c in 0..0xFF {
-            let xor_string = single_byte_xor(&bytes, c);
-            let score = score(&xor_string);
+            let xor_string = xor_char(&bytes, c);
+            let score = english_score(&xor_string);
     
             if score > highest_score {
                 highest_scoring_ciphertext = l.to_owned();
