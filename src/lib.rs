@@ -217,6 +217,21 @@ pub fn english_score(s: &str) -> f64 {
     score
 }
 
+pub fn pkcs7_padding(bytes: &[u8], block_size: u8) -> Vec<u8> {
+    let block_size = block_size as usize;
+    let r = block_size - (bytes.len() % block_size);
+    
+    let mut result = bytes.to_vec();
+
+    if r != block_size {
+        for _ in 0..r {
+            result.push(r as u8);
+        }
+    }
+
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -278,5 +293,15 @@ mod tests {
     fn hamming_distance_works() {
         assert_eq!(hamming_distance(b"this is a test", b"wokka wokka!!!"), Ok(37));
         assert_eq!(hamming_distance(b"this is a test", b"wrong size"), Err(Error::NotEqualSizeError));
+    }
+
+    #[test]
+    fn pkcs7_padding_works() {
+        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE", 20), b"YELLOW SUBMARINE\x04\x04\x04\x04");
+        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE!", 20), b"YELLOW SUBMARINE!\x03\x03\x03");
+        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE!!", 20), b"YELLOW SUBMARINE!!\x02\x02");
+        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE!!!", 20), b"YELLOW SUBMARINE!!!\x01");
+        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE!!!!", 20), b"YELLOW SUBMARINE!!!!");
+        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE!!!!!", 20), b"YELLOW SUBMARINE!!!!!\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13");
     }
 }
