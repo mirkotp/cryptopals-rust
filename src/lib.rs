@@ -175,7 +175,7 @@ pub fn xor(s: &[u8], k: &[u8]) -> Vec<u8> {
     let mut key = k.iter().cycle();
 
     for i in 0..s.len() {
-        out.push(s[i]^key.next().unwrap())
+        out.push(s[i]^key.next().unwrap());
     }
 
     out
@@ -217,7 +217,9 @@ pub fn english_score(s: &str) -> f64 {
     score
 }
 
-pub fn pkcs7_padding(bytes: &[u8], block_size: u8) -> Vec<u8> {
+/// Pads byte sequences according to PKCS#7
+/// TODO managing errors
+pub fn pkcs7_pad(bytes: &[u8], block_size: u8) -> Vec<u8> {
     let block_size = block_size as usize;
     let r = block_size - (bytes.len() % block_size);
     
@@ -227,9 +229,32 @@ pub fn pkcs7_padding(bytes: &[u8], block_size: u8) -> Vec<u8> {
         for _ in 0..r {
             result.push(r as u8);
         }
+    } else {
+        for _ in 0..block_size {
+            result.push(block_size as u8);
+        }
     }
 
     result
+}
+
+/// Unpads byte sequences according to PKCS#7
+/// TODO managing errors
+pub fn pkcs7_unpad(bytes: &[u8], block_size: u8) -> Vec<u8> {
+    let last = bytes[bytes.len()-1];
+    let mut output = bytes.to_vec();
+    if last == block_size {
+        let last_n = &bytes[(bytes.len()-block_size as usize)..];
+
+        if last_n == vec![block_size; block_size as usize] {
+            output.truncate(bytes.len()-block_size as usize);
+        }
+
+        return output;
+    }
+
+    output.truncate(bytes.len()-last as usize);
+    output
 }
 
 #[cfg(test)]
@@ -297,11 +322,11 @@ mod tests {
 
     #[test]
     fn pkcs7_padding_works() {
-        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE", 20), b"YELLOW SUBMARINE\x04\x04\x04\x04");
-        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE!", 20), b"YELLOW SUBMARINE!\x03\x03\x03");
-        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE!!", 20), b"YELLOW SUBMARINE!!\x02\x02");
-        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE!!!", 20), b"YELLOW SUBMARINE!!!\x01");
-        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE!!!!", 20), b"YELLOW SUBMARINE!!!!");
-        assert_eq!(pkcs7_padding(b"YELLOW SUBMARINE!!!!!", 20), b"YELLOW SUBMARINE!!!!!\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13");
+        assert_eq!(pkcs7_pad(b"YELLOW SUBMARINE", 20), b"YELLOW SUBMARINE\x04\x04\x04\x04");
+        assert_eq!(pkcs7_pad(b"YELLOW SUBMARINE!", 20), b"YELLOW SUBMARINE!\x03\x03\x03");
+        assert_eq!(pkcs7_pad(b"YELLOW SUBMARINE!!", 20), b"YELLOW SUBMARINE!!\x02\x02");
+        assert_eq!(pkcs7_pad(b"YELLOW SUBMARINE!!!", 20), b"YELLOW SUBMARINE!!!\x01");
+        assert_eq!(pkcs7_pad(b"YELLOW SUBMARINE!!!!", 20), b"YELLOW SUBMARINE!!!!\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
+        assert_eq!(pkcs7_pad(b"YELLOW SUBMARINE!!!!!", 20), b"YELLOW SUBMARINE!!!!!\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13\x13");
     }
 }
