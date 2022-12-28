@@ -1,4 +1,5 @@
-use cryptopals::{english_score, ToBytes, xor_char};
+use cryptopals::crypto::xor_char;
+use cryptopals::tools::{english_score, ToBytes};
 use std::io::{BufReader, BufRead};
 use std::fs::File;
 

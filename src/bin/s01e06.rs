@@ -1,17 +1,8 @@
-use cryptopals::{ToBytes, hamming_distance, xor_char, english_score, xor};
-use std::io::{BufReader, BufRead};
-use std::fs::File;
+use cryptopals::tools::{hamming_distance, english_score, load_base64_file};
+use cryptopals::crypto::{xor_char, xor_string};
 
 fn main() {
-    let file = File::open("./res/s01e06").unwrap();
-    let reader = BufReader::new(file);
-
-    let mut bytes = Vec::with_capacity(64*60/4*3);  // We know the size of
-                                                    // the input file.
-    for line in reader.lines() {
-        let mut line_bytes = line.unwrap().parse_base64().unwrap();
-        bytes.append(&mut line_bytes);
-    }
+    let bytes = load_base64_file("./res/s01e06");
 
     let mut best_distance = f64::INFINITY;
     let mut best_ksize = 0;
@@ -56,7 +47,7 @@ fn main() {
         key.push(best_xor);
     }
 
-    let decrypted = xor(&bytes, &key);
+    let decrypted = xor_string(&bytes, &key);
 
     println!("Best KSIZE: {}", best_ksize);
     println!("Key: {}", String::from_utf8_lossy(&key));

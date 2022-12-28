@@ -1,4 +1,4 @@
-use cryptopals::{AsString, ToBytes};
+use cryptopals::tools::{AsString, ToBytes};
 
 fn main() {
     let bytes = "1c0111001f010100061a024b53535009181c".parse_hex().unwrap();

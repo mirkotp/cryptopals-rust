@@ -1,6 +1,6 @@
 use std::io::{BufReader, BufRead};
 use std::fs::File;
-use openssl::symm::{Cipher};
+use openssl::symm::Cipher;
 
 fn main() {
     let file = File::open("./res/s01e08").unwrap();
