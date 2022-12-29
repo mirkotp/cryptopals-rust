@@ -1,4 +1,5 @@
-use openssl::symm::{Crypter, Cipher, Mode, encrypt};
+use openssl::{symm::{Crypter, Cipher, Mode, encrypt}};
+use rand::Rng;
 
 /// Performs a XOR of a byte sequence on a single char key.
 /// Outputs a String
@@ -119,6 +120,18 @@ pub fn aes_cbc_decrypt(bytes: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, P
     }
 
     pkcs7_unpad(&output, block_size as u8)
+}
+
+/// Generates a random key of the desired size
+pub fn random_bytes(size: usize) -> Vec<u8> {
+    let mut key: Vec<u8> = Vec::with_capacity(size);
+    let mut rng = rand::thread_rng();
+
+    for _ in 0..size {
+        key.push(rng.gen()); 
+    }
+
+    key
 }
 
 #[cfg(test)]
