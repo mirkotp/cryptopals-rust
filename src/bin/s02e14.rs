@@ -1,5 +1,6 @@
 use cryptopals::tools::{ToBytes};
 use openssl::symm::{encrypt, Cipher};
+
 fn main() {
     // Let's skip the discovery of the block size and the ECB detection
     // as they are the same as in challenge 12.
