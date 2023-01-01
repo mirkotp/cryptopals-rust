@@ -10,20 +10,14 @@ fn main() {
     // repeated blocks, this will help us identify the size of the 
     // prefix.
     let mut prefix_size = 0;
-    for i in 2*block_size..=3*block_size {
+    'outer: for i in 2*block_size..=3*block_size {
         let cipher = encryption_oracle(&vec![b'A'; i]);
         
-        let mut found = false;
         for j in (block_size..cipher.len()).step_by(block_size) {
             if cipher[j..j+block_size] == cipher[j-block_size..j] {
-                found = true;
                 prefix_size = j-block_size-(i-2*block_size);
-                break;
+                break 'outer;
             }
-        }
-
-        if found {
-            break;
         }
     }
 
