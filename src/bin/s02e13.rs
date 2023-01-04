@@ -2,10 +2,6 @@ use json::{object, JsonValue};
 use openssl::symm::{decrypt, encrypt, Cipher};
 
 fn main() {
-    // Challenge: Using only the user input to profile_for() (as an oracle
-    // to generate "valid" ciphertexts) and the ciphertexts themselves,
-    // make a role=admin profile.
-
     // We already know how to find the block size
     let block_size = 16;
 
@@ -13,8 +9,10 @@ fn main() {
     let blocks = enc.len() / block_size;
 
     'outer: for i in 1..=16 {
-        // Find how many bits we need to add to make an even number of
-        // plaintext blocks.
+        // We act as we don't know the prefix and suffix added by
+        // the profile_for function, so the first step is to find
+        // how many bits we need to add to make the plaintext an
+        // exact multiple of the block size.
         let enc = profile_encrypt(&String::from_utf8_lossy(&vec![b'a'; i]));
         let cur_blocks = enc.len() / block_size;
         if cur_blocks > blocks {
