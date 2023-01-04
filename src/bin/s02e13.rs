@@ -1,53 +1,95 @@
-use cryptopals::crypto::random_bytes;
 use json::{object, JsonValue};
 use openssl::symm::{decrypt, encrypt, Cipher};
 
 fn main() {
-    assert_eq!(
-        kv_to_json("foo=bar&baz=qux&zap=zazzle"),
-        json::parse(r#"{"foo":"bar", "baz":"qux", "zap":"zazzle"}"#).unwrap()
-    );
-
-    assert_eq!(
-        kv_to_json(&profile_for("foo@bar.com")),
-        json::parse(r#"{"email":"foo@bar.com", "uid":"10", "role":"user"}"#).unwrap()
-    );
-
-    assert_eq!(
-        kv_to_json(&profile_for("foo@bar.com&role=admin")),
-        json::parse(r#"{"email":"foo@bar.comroleadmin", "uid":"10", "role":"user"}"#).unwrap()
-    );
-
-    // TODO Using only the user input to profile_for() (as an oracle
+    // Challenge: Using only the user input to profile_for() (as an oracle
     // to generate "valid" ciphertexts) and the ciphertexts themselves,
     // make a role=admin profile.
-    let key = random_bytes(16);
-    let enc = profile_encrypt(&key, "foo@bar.com");
-    let dec = profile_decrypt(&key, &enc);
-    println!("{}", dec);
+
+    // We already know how to find the block size
+    let block_size = 16;
+
+    let enc = profile_encrypt("");
+    let blocks = enc.len() / block_size;
+
+    'outer: for i in 1..=16 {
+        // Find how many bits we need to add to make an even number of
+        // plaintext blocks.
+        let enc = profile_encrypt(&String::from_utf8_lossy(&vec![b'a'; i]));
+        let cur_blocks = enc.len() / block_size;
+        if cur_blocks > blocks {
+            // Now pad with another 4 bits to put the string "user" in
+            // the next block
+            let aligned_enc = profile_encrypt(&String::from_utf8_lossy(&vec![b'a'; i + 4]));
+            let all_but_last = &aligned_enc[..block_size * (blocks)];
+
+            // Find how the block "admin" would be encoded, by adding the padded
+            // "admin" string 3 times and looking for two identical blocks in the
+            // ciphertext.
+            // We don't know the length of the prefix so we make a few tries.
+            for i in 0..16 {
+                let input: String = "admin\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B\x0B"
+                    .chars()
+                    .cycle()
+                    .skip(i)
+                    .take(48)
+                    .collect();
+
+                let last = profile_encrypt(&input);
+
+                for j in 1..(last.len() / block_size) {
+                    let base = j * block_size;
+
+                    // Once we find two equal blocks we use them as our last block
+                    if last[base - block_size..base] == last[base..base + block_size] {
+                        let cipher = [all_but_last, &last[base - block_size..base]].concat();
+                        if let Some(dec) = profile_decrypt(&cipher) {
+                            for (k, v) in dec.entries() {
+                                if k == "role" && v == "admin" {
+                                    // Found!
+                                    println!("{}", &dec);
+                                    break 'outer;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
-fn kv_to_json(input: &str) -> JsonValue {
+// Random key
+const KEY: [u8; 16] = [
+    222, 169, 210, 64, 54, 245, 202, 169, 10, 22, 227, 110, 176, 43, 11, 165,
+];
+
+fn kv_to_json(input: &str) -> Option<JsonValue> {
     let mut out = object! {};
-    input.split('&').into_iter().for_each(|kv| {
-        let (k, v) = kv.split_once('=').unwrap();
-        out.insert(k, v).unwrap();
-    });
-    out
+    for s in input.split('&') {
+        if let Some((k, v)) = s.split_once('=') {
+            out.insert(k, v).unwrap();
+        } else {
+            return None;
+        }
+    }
+    Some(out)
 }
 
 fn profile_for(email: &str) -> String {
     let email = email.to_string().replace("&", "").replace("=", "");
-
     "email=".to_string() + &email + "&uid=10&role=user"
 }
 
-fn profile_encrypt(key: &[u8], email: &str) -> Vec<u8> {
+fn profile_encrypt(email: &str) -> Vec<u8> {
     let plain = profile_for(email);
-    encrypt(Cipher::aes_128_ecb(), key, None, &plain.as_bytes()).unwrap()
+    encrypt(Cipher::aes_128_ecb(), &KEY, None, &plain.as_bytes()).unwrap()
 }
 
-fn profile_decrypt(key: &[u8], cipher: &[u8]) -> JsonValue {
-    let plain = decrypt(Cipher::aes_128_ecb(), key, None, cipher).unwrap();
-    kv_to_json(&String::from_utf8_lossy(&plain))
+fn profile_decrypt(cipher: &[u8]) -> Option<JsonValue> {
+    if let Ok(plain) = decrypt(Cipher::aes_128_ecb(), &KEY, None, cipher) {
+        kv_to_json(&String::from_utf8_lossy(&plain))
+    } else {
+        None
+    }
 }
