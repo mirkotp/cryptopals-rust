@@ -1,4 +1,4 @@
-use cryptopals::tools::{ToBytes};
+use cryptopals::tools::ToBytes;
 use openssl::symm::{encrypt, Cipher};
 
 fn main() {

@@ -6,5 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+json = "0.12.4"
 openssl = "0.10.45"
 rand = "0.8.5"

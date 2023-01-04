@@ -30,6 +30,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "cryptopals"
 version = "0.1.0"
 dependencies = [
+ "json",
  "openssl",
  "rand",
 ]
@@ -59,6 +60,12 @@ dependencies = [
  "libc",
  "wasi",
 ]
+
+[[package]]
+name = "json"
+version = "0.12.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "078e285eafdfb6c4b434e0d31e8cfcb5115b651496faca5749b88fafd4f23bfd"
 
 [[package]]
 name = "libc"

@@ -1,4 +1,4 @@
-use cryptopals::{tools::{ToBytes}};
+use cryptopals::tools::ToBytes;
 use openssl::symm::{encrypt, Cipher};
 
 fn main() {
@@ -65,4 +65,5 @@ fn encryption_oracle(data: &[u8]) -> Vec<u8> {
 
     let salted = [data, &salt].concat();
     encrypt(Cipher::aes_128_ecb(), &key, None, &salted).unwrap()
+
 }
